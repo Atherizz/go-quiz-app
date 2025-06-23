@@ -4,14 +4,17 @@ import (
 	"google-oauth/helper"
 	"google-oauth/model"
 	"google-oauth/web"
-	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 )
 
-func ProfileApi(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func ProfileApi(c *gin.Context) {
 
-	user := request.Context().Value("user")
+    user, exists := c.Get("user")
+    if !exists {
+        c.JSON(404, gin.H{"error": "value not found"})
+        return
+    }
 	authUser := user.(model.AuthUser)
 
 	userResponse := web.UserResponse{
@@ -20,7 +23,7 @@ func ProfileApi(writer http.ResponseWriter, request *http.Request, params httpro
 		Picture: authUser.Picture,
 	}
 
-	helper.WriteEncodeResponse(writer, web.WebResponse{
+	helper.WriteEncodeResponse(c.Writer, web.WebResponse{
 		Code:   200,
 		Status: "OK",
 		Data:   userResponse,

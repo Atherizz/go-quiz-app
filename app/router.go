@@ -3,26 +3,22 @@ package app
 import (
 	"google-oauth/handler"
 	"google-oauth/middleware"
-
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(oauthController *handler.OauthController) *httprouter.Router {
-	router := httprouter.New()
-
-	oauthMiddleware := middleware.NewOauth2Middleware(router)
-	authMiddleware := middleware.NewAuthMiddleware(router)
+func NewRouter(oauthController *handler.OauthController) *gin.Engine {
+	router := gin.Default()
 
 	router.GET("/auth/google/login", oauthController.LoginOauth)
-	router.GET("/home", oauthMiddleware.Wrap(oauthController.HomeOauth))
 	router.GET("/callback", oauthController.Callback)
-	router.GET("/profile", oauthMiddleware.Wrap(authMiddleware.Wrap(oauthController.ProfileOauth)))
-	router.GET("/logout", oauthMiddleware.Wrap(oauthController.Logout))
+	router.GET("/logout", middleware.OauthMiddleware(), oauthController.Logout)
 	
 	router.GET("/login", handler.LoginView)
 	router.GET("/register",handler.RegisterView)
+	router.GET("/home", middleware.OauthMiddleware(), handler.HomeView)
+	router.GET("/profile", middleware.OauthMiddleware(), middleware.AuthMiddleware(), handler.ProfileView)
 
-	router.GET("/api/user", oauthMiddleware.Wrap(authMiddleware.Wrap(handler.ProfileApi)))
+	router.GET("/api/user",middleware.OauthMiddleware(), middleware.AuthMiddleware(), handler.ProfileApi)
 	router.POST("/api/register", oauthController.RegisterDefault)
 
 	return router

@@ -9,11 +9,9 @@ import (
 	"google-oauth/model"
 	"google-oauth/service"
 	"google-oauth/web"
-	"html/template"
 	"net/http"
-	"time"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 	"golang.org/x/oauth2"
 )
 
@@ -27,96 +25,72 @@ func NewOauthController(service *service.UserService) *OauthController {
 	}
 }
 
-func (controller *OauthController) BasicOauth(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	fmt.Fprint(writer, "selamat datang di endpoint basic auth! anda berhasil terautentikasi \n")
+func (controller *OauthController) BasicOauth(c *gin.Context) {
+	fmt.Fprint(c.Writer, "selamat datang di endpoint basic auth! anda berhasil terautentikasi \n")
 }
 
-func (controller *OauthController) HomeOauth(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	session, _ := helper.Store.Get(request, "user_info")
+func (controller *OauthController) LoginOauth(c *gin.Context) {
+	url := middleware.OauthConfig.AuthCodeURL("", oauth2.AccessTypeOffline)
+	c.Redirect(http.StatusSeeOther, url)
+	// http.Redirect(c.Writer, c.Request, url, http.StatusSeeOther)
 
-	user, ok := session.Values["user"].(model.AuthUser)
-	if !ok || user.Email == "" || user.Name == "" {
-		http.Error(writer, "unauthorized", http.StatusUnauthorized)
+}
+
+func (controller *OauthController) RegisterDefault(c *gin.Context) {
+	registeredUser := web.UserRequest{}
+
+	if err := c.ShouldBindJSON(&registeredUser); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// fmt.Fprint(writer, "welcome ", name)
-	tmpl := template.Must(template.ParseFiles("./resources/welcome.gohtml"))
-	tmpl.ExecuteTemplate(writer, "welcome.gohtml", user.Name)
 
-}
+	response := controller.Service.RegisterDefault(c.Request.Context(), registeredUser)
 
-func (controller *OauthController) LoginOauth(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	url := middleware.OauthConfig.AuthCodeURL("", oauth2.AccessTypeOffline)
-	http.Redirect(writer, request, url, http.StatusSeeOther)
-
-}
-
-func (controller *OauthController) RegisterDefault(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	decoder := json.NewDecoder(request.Body)
-	registeredUser := web.UserRequest{}
-	err := decoder.Decode(&registeredUser)
-	if err != nil {
-		panic(err)
-	}
-	
-	response := controller.Service.RegisterDefault(request.Context(), registeredUser)
-
-	helper.WriteEncodeResponse(writer, web.WebResponse{
-		Code: 200,
+	helper.WriteEncodeResponse(c.Writer, web.WebResponse{
+		Code:   200,
 		Status: "OK",
-		Data: response,
+		Data:   response,
 	})
 
 }
 
-func (controller *OauthController) ProfileOauth(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	session, _ := helper.Store.Get(request, "user_info")
-
-	user, ok := session.Values["user"].(model.AuthUser)
-	if !ok || user.Email == "" || user.Name == "" {
-		http.Error(writer, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-	// fmt.Fprint(writer, "welcome ", name)
-	http.ServeFile(writer, request, "./resources/profile.html")
-
-}
-
-func (controller *OauthController) Callback(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	code := request.URL.Query().Get("code")
-	token, err := middleware.OauthConfig.Exchange(request.Context(), code)
+func (controller *OauthController) Callback(c *gin.Context) {
+	code := c.Request.URL.Query().Get("code")
+	token, err := middleware.OauthConfig.Exchange(c.Request.Context(), code)
 	if err != nil {
-		http.Error(writer, "failed get token", http.StatusInternalServerError)
+		http.Error(c.Writer, "failed get token", http.StatusInternalServerError)
 		return
 	}
 
 	idToken, ok := token.Extra("id_token").(string)
 
 	if !ok {
-		http.Error(writer, "no id_token in field token", http.StatusInternalServerError)
+		http.Error(c.Writer, "no id_token in field token", http.StatusInternalServerError)
 	}
 
 	tokenPayload, err := helper.DecodeIdToken(idToken)
 	if err != nil {
-		http.Error(writer, "failed decode token", http.StatusInternalServerError)
+		http.Error(c.Writer, "failed decode token", http.StatusInternalServerError)
 	}
 
 	tokenJson, err := json.Marshal(token)
 	if err != nil {
-		http.Error(writer, "failed to marshal token", http.StatusInternalServerError)
+		http.Error(c.Writer, "failed to marshal token", http.StatusInternalServerError)
 		return
 	}
+
 	encoded := base64.StdEncoding.EncodeToString(tokenJson)
 
-	http.SetCookie(writer, &http.Cookie{
-		Name:     "oauth_token",
-		Value:    encoded,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   false,
-	})
+	cookie, err := c.Cookie("oauth_token")
 
-	userResponse := controller.Service.GetUserByEmail(request.Context(), tokenPayload.Email)
+	if err != nil {
+		cookie = "NotSet"
+		c.SetCookie("oauth_token", encoded, 3600, "/", "localhost", false, true)
+	}
+
+	fmt.Println("OAuth token:", cookie)
+
+	userResponse := controller.Service.GetUserByEmail(c.Request.Context(), tokenPayload.Email)
 
 	if userResponse.Email == "" {
 		userRequest := model.AuthUser{
@@ -126,10 +100,10 @@ func (controller *OauthController) Callback(writer http.ResponseWriter, request 
 			Picture:  tokenPayload.Picture,
 		}
 
-		controller.Service.RegisterFromGoogle(request.Context(), userRequest)
+		controller.Service.RegisterFromGoogle(c.Request.Context(), userRequest)
 	}
 
-	session, _ := helper.Store.Get(request, "user_info")
+	session, _ := helper.Store.Get(c.Request, "user_info")
 	session.Values["user"] = model.AuthUser{
 		Name:     tokenPayload.Name,
 		Email:    tokenPayload.Email,
@@ -137,27 +111,19 @@ func (controller *OauthController) Callback(writer http.ResponseWriter, request 
 		GoogleId: tokenPayload.Sub,
 	}
 
-	err = session.Save(request, writer)
+	err = session.Save(c.Request, c.Writer)
 	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(writer, request, "/home", http.StatusFound)
+	c.Redirect(http.StatusFound, "/home")
+	// http.Redirect(c.Writer, c.Request, "/home", http.StatusFound)
 }
 
-func (controller *OauthController) Logout(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (controller *OauthController) Logout(c *gin.Context) {
 
-	cookie := http.Cookie{
-		Name:     "oauth_token",
-		Value:    "",
-		Path:     "/",
-		MaxAge:   0,
-		Expires:  time.Unix(0, 0),
-		HttpOnly: true,
-		Secure:   false,
-	}
-
-	http.SetCookie(writer, &cookie)
-	http.Redirect(writer, request, "/login", http.StatusFound)
+	c.SetCookie("oauth_token", "", -1, "/", "localhost", false, true)
+	c.Redirect(http.StatusFound, "/login")
+	// http.Redirect(c.Writer, c.Request, "/login", http.StatusFound)
 }

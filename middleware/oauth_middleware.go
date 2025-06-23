@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -18,25 +18,16 @@ var OauthConfig = oauth2.Config{
 	Endpoint:     google.Endpoint,
 }
 
-type Oauth2Middleware struct {
-	Handler http.Handler
-}
 
-func NewOauth2Middleware(handler http.Handler) *Oauth2Middleware {
-	return &Oauth2Middleware{
-		Handler: handler,
-	}
-}
-
-func loadTokenFromRequest(request *http.Request) (*oauth2.Token, error) {
+func loadTokenFromRequest(c *gin.Context) (*oauth2.Token, error) {
 	// get data from cookies
-	cookie, err := request.Cookie("oauth_token")
+	cookie, err := c.Cookie("oauth_token")
 	if err != nil {
 		return nil, err
 	}
 
 	// Mengambil string yang di-encode base64, lalu decode ke bytes.
-	tokenBytes, err := base64.StdEncoding.DecodeString(cookie.Value)
+	tokenBytes, err := base64.StdEncoding.DecodeString(cookie)
 	if err != nil {
 		return nil, err
 	}
@@ -51,25 +42,23 @@ func loadTokenFromRequest(request *http.Request) (*oauth2.Token, error) {
 	return &token, nil
 }
 
-func (middleware *Oauth2Middleware) Wrap(next httprouter.Handle) httprouter.Handle {
-	return func(writer http.ResponseWriter, request *http.Request, param httprouter.Params) {
-		token, err := loadTokenFromRequest(request)
+func OauthMiddleware() gin.HandlerFunc {
+  	return func(c *gin.Context) {
+		token, err := loadTokenFromRequest(c)
 		if err != nil || !token.Valid() {
-			// http.Redirect(writer, request, OauthConfig.AuthCodeURL("", oauth2.AccessTypeOffline), http.StatusNotFound)
-			http.Redirect(writer, request, "/login", http.StatusSeeOther)
+			c.Redirect(http.StatusSeeOther, "/login")
 			return
 		}
-	
-		tokenSource := OauthConfig.TokenSource(request.Context(), token)
+
+		tokenSource := OauthConfig.TokenSource(c.Request.Context(), token)
 
 		token, err = tokenSource.Token()
 		if err != nil || !token.Valid() {
-			http.Redirect(writer, request, OauthConfig.AuthCodeURL("", oauth2.AccessTypeOffline), http.StatusNotFound)
+			c.Redirect(http.StatusNotFound, OauthConfig.AuthCodeURL("", oauth2.AccessTypeOffline))
 			return
 		}
 
-		
-		next(writer, request, param)
+		c.Next()
 
 	}
 }

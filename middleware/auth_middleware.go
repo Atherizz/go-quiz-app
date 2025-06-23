@@ -1,34 +1,28 @@
 package middleware
 
 import (
-	"context"
 	"google-oauth/helper"
 	"google-oauth/model"
 	"net/http"
-	"github.com/julienschmidt/httprouter"
+
+	"github.com/gin-gonic/gin"
 )
 
-type AuthMiddleware struct {
-	Handler http.Handler
-}
-
-func NewAuthMiddleware(handler http.Handler) *AuthMiddleware {
-	return &AuthMiddleware{
-		Handler: handler,
-	}
-}
-
-func (middleware *AuthMiddleware) Wrap(next httprouter.Handle) httprouter.Handle {
-	return func(writer http.ResponseWriter, request *http.Request, param httprouter.Params) {
-		session, _ := helper.Store.Get(request, "user_info")
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session, _ := helper.Store.Get(c.Request, "user_info")
 
 		user, ok := session.Values["user"].(model.AuthUser)
-		if !ok ||  user.Name == "" || user.Email == "" {
-			http.Error(writer, "unauthorized", http.StatusUnauthorized)
+		if !ok || user.Name == "" || user.Email == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "unauthorized",
+			})
 			return
 		}
 
-		ctx := context.WithValue(request.Context(), "user", user)
-		next(writer, request.WithContext(ctx), param)
+		c.Set("user", user)
+		c.Next()
+		// ctx := context.WithValue(c.Request.Context(), "user", user)
+		// next(c.Writer, request.WithContext(ctx), param)
 	}
 }
