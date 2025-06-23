@@ -5,9 +5,9 @@ import (
 	"google-oauth/web"
 )
 
-func ToUserResponse(user model.AuthUser) web.UserResponse {
+func ToUserResponse(user model.User) web.UserResponse {
 	return web.UserResponse{
-		Id: user.Id,
+		Id: user.ID,
 		GoogleId: user.GoogleId,
 		Name: user.Name,
 		Email: user.Email,

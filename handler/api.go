@@ -15,7 +15,7 @@ func ProfileApi(c *gin.Context) {
         c.JSON(404, gin.H{"error": "value not found"})
         return
     }
-	authUser := user.(model.AuthUser)
+	authUser := user.(model.User)
 
 	userResponse := web.UserResponse{
 		Email:   authUser.Email,

@@ -93,7 +93,7 @@ func (controller *OauthController) Callback(c *gin.Context) {
 	userResponse := controller.Service.GetUserByEmail(c.Request.Context(), tokenPayload.Email)
 
 	if userResponse.Email == "" {
-		userRequest := model.AuthUser{
+		userRequest := model.User{
 			GoogleId: tokenPayload.Sub,
 			Name:     tokenPayload.Name,
 			Email:    tokenPayload.Email,
@@ -104,7 +104,7 @@ func (controller *OauthController) Callback(c *gin.Context) {
 	}
 
 	session, _ := helper.Store.Get(c.Request, "user_info")
-	session.Values["user"] = model.AuthUser{
+	session.Values["user"] = model.User{
 		Name:     tokenPayload.Name,
 		Email:    tokenPayload.Email,
 		Picture:  tokenPayload.Picture,

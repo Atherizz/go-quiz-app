@@ -2,48 +2,51 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"google-oauth/helper"
 	"google-oauth/model"
 	"google-oauth/repository"
 	"google-oauth/web"
+
 	"github.com/go-playground/validator/v10"
+	"gorm.io/gorm"
 )
 
 type UserService struct {
 	Repository repository.UserRepository
-	DB         *sql.DB
+	DB         *gorm.DB
 	Validate   *validator.Validate
 }
 
-func NewUserService(repo repository.UserRepository, db *sql.DB, validator *validator.Validate) *UserService {
+func NewUserService(repo repository.UserRepository, db *gorm.DB, validator *validator.Validate) *UserService {
 	return &UserService{
 		Repository: repo,
-		DB: db,
-		Validate: validator,
+		DB:         db,
+		Validate:   validator,
 	}
 }
 
-func (service *UserService) RegisterFromGoogle(ctx context.Context, request model.AuthUser) web.UserResponse {
-	tx, err := service.DB.Begin()
-	if err != nil {
-		panic(err)
-	}
-	defer helper.CommitOrRollback(tx)
+func (service *UserService) RegisterFromGoogle(ctx context.Context, request model.User) web.UserResponse {
+	var response web.UserResponse
 
-	user := model.AuthUser{
-		// id,google_id,name,email,picture,provider,role
-		Id: request.Id,
-		GoogleId: request.GoogleId,
-		Name: request.Name,
-		Email: request.Email,
-		Picture: request.Picture,
-		Provider: request.Provider,
-		Role: request.Role,
-	}
+	service.DB.Transaction(func(tx *gorm.DB) error {
 
-	userRegister := service.Repository.RegisterFromGoogle(ctx, tx, user)	
-	return helper.ToUserResponse(userRegister)
+		user := model.User{
+			// id,google_id,name,email,picture,provider,role
+			GoogleId: request.GoogleId,
+			Name:     request.Name,
+			Email:    request.Email,
+			Picture:  request.Picture,
+			Provider: request.Provider,
+			Role:     request.Role,
+		}
+
+		userRegister := service.Repository.RegisterFromGoogle(ctx, tx, user)
+		response = helper.ToUserResponse(userRegister)
+
+		return nil
+	})
+
+	return response
 }
 
 func (service *UserService) RegisterDefault(ctx context.Context, request web.UserRequest) web.UserResponse {
@@ -51,34 +54,43 @@ func (service *UserService) RegisterDefault(ctx context.Context, request web.Use
 	if err != nil {
 		return web.UserResponse{}
 	}
+	var response web.UserResponse
 
-	tx, err := service.DB.Begin()
-	if err != nil {
-		panic(err)
-	}
-	defer helper.CommitOrRollback(tx)
+	service.DB.Transaction(func(tx *gorm.DB) error {
 
-	user := model.AuthUser{
-		Name: request.Name,
-		Email: request.Email,
-		Password: request.Password,
-	}
+		user := model.User{
+			Name:     request.Name,
+			Email:    request.Email,
+			Password: request.Password,
+		}
 
-	userRegister := service.Repository.RegisterDefault(ctx, tx, user)	
-	return helper.ToUserResponse(userRegister)
+		userRegister := service.Repository.RegisterDefault(ctx, tx, user)
+		response = helper.ToUserResponse(userRegister)
+
+		return nil
+	})
+
+	return response
 }
 
 func (service *UserService) GetUserByEmail(ctx context.Context, email string) web.UserResponse {
-	tx, err := service.DB.Begin()
-	if err != nil {
-		panic(err)
-	}
-	defer helper.CommitOrRollback(tx)
+	var response web.UserResponse
 
-	user,err := service.Repository.GetUserByEmail(ctx, tx, email)	
+	err := service.DB.Transaction(func(tx *gorm.DB) error {
+
+		user, err := service.Repository.GetUserByEmail(ctx, tx, email)
+
+		if err != nil {
+			return err
+		}
+		response = helper.ToUserResponse(user)
+
+		return nil
+	})
+
 	if err != nil {
 		return web.UserResponse{}
 	}
 
-	return helper.ToUserResponse(user)
+	return response
 }

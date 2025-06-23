@@ -85,6 +85,11 @@
             const password = document.getElementById("password").value
             const confirm_password = document.getElementById("confirm_password").value
 
+            if (password !== confirm_password) {
+            alert("Password dan konfirmasi password tidak sama.");
+            return;
+            }
+
             try {
                 const response = await fetch("/api/register", {
                     method: "POST",

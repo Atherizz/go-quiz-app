@@ -23,7 +23,7 @@ func HomeView(c *gin.Context) {
 
 	session, _ := helper.Store.Get(c.Request, "user_info")
 
-	user, ok := session.Values["user"].(model.AuthUser)
+	user, ok := session.Values["user"].(model.User)
 	if !ok || user.Email == "" || user.Name == "" {
 		http.Error(c.Writer, "unauthorized", http.StatusUnauthorized)
 		return
@@ -37,7 +37,7 @@ func HomeView(c *gin.Context) {
 func ProfileView(c *gin.Context) {
 	session, _ := helper.Store.Get(c.Request, "user_info")
 
-	user, ok := session.Values["user"].(model.AuthUser)
+	user, ok := session.Values["user"].(model.User)
 	if !ok || user.Email == "" || user.Name == "" {
 		http.Error(c.Writer, "unauthorized", http.StatusUnauthorized)
 		return

@@ -12,7 +12,7 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session, _ := helper.Store.Get(c.Request, "user_info")
 
-		user, ok := session.Values["user"].(model.AuthUser)
+		user, ok := session.Values["user"].(model.User)
 		if !ok || user.Name == "" || user.Email == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "unauthorized",
@@ -22,7 +22,5 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		c.Set("user", user)
 		c.Next()
-		// ctx := context.WithValue(c.Request.Context(), "user", user)
-		// next(c.Writer, request.WithContext(ctx), param)
 	}
 }

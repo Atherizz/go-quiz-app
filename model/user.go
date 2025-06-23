@@ -2,8 +2,8 @@ package model
 
 import "time"
 
-type AuthUser struct {
-	Id          int
+type User struct {
+	ID          int `gorm:"primaryKey"`
 	GoogleId    string
 	Name        string
 	Email       string

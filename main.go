@@ -7,7 +7,6 @@ import (
 	"google-oauth/model"
 	"google-oauth/repository"
 	"google-oauth/service"
-	"net/http"
 
 	"github.com/go-playground/validator/v10"
 	_ "github.com/go-sql-driver/mysql"
@@ -19,32 +18,11 @@ func main() {
 	validate := validator.New(validator.WithRequiredStructEnabled())
 
 	userRepository := repository.NewUserRepository()
-	userService := service.NewUserService(*userRepository,db, validate)
+	userService := service.NewUserService(*userRepository, db, validate)
 	userController := handler.NewOauthController(userService)
 
 	router := app.NewRouter(userController)
-	gob.Register(model.AuthUser{})
+	gob.Register(model.User{})
 
-	server := http.Server{
-		Addr:    "localhost:8000",
-		Handler: router,
-	}
-
-
-//   router := gin.Default()
-
-//   s := &http.Server{
-//     Addr:           ":8080",
-//     Handler:        router,
-//     ReadTimeout:    10 * time.Second,
-//     WriteTimeout:   10 * time.Second,
-//     MaxHeaderBytes: 1 << 20,
-//   }
-//   s.ListenAndServe()
-
-
-	err := server.ListenAndServe()
-	if err != nil {
-		panic(err)
-	}
+	router.Run(":8000")
 }
