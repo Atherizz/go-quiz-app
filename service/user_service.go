@@ -54,6 +54,7 @@ func (service *UserService) RegisterDefault(ctx context.Context, request web.Use
 	if err != nil {
 		return web.UserResponse{}
 	}
+	
 	var response web.UserResponse
 
 	service.DB.Transaction(func(tx *gorm.DB) error {

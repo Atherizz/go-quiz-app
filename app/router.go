@@ -12,17 +12,27 @@ func NewRouter(oauthController *handler.OauthController) *gin.Engine {
 
 	router.GET("/auth/google/login", oauthController.LoginOauth)
 	router.GET("/callback", oauthController.Callback)
-	router.GET("/logout", middleware.OauthMiddleware(), oauthController.Logout)
-
 	router.GET("/login", handler.LoginView)
 	router.GET("/register", handler.RegisterView)
-	router.GET("/home", middleware.OauthMiddleware(), handler.HomeView)
-	router.GET("/profile", middleware.OauthMiddleware(), middleware.AuthMiddleware(), handler.ProfileView)
 
 	api := router.Group("/api")
-	api.GET("/user", middleware.OauthMiddleware(), middleware.AuthMiddleware(), handler.ProfileApi)
-	api.POST("/register", oauthController.RegisterDefault)
+	{
+		api.GET("/user", middleware.OauthMiddleware(), middleware.AuthMiddleware(), handler.ProfileApi)
+		api.POST("/register", oauthController.RegisterDefault)
+	}
+
+	oauthGroup := router.Group("/")
+	oauthGroup.Use(middleware.OauthMiddleware())
+	{
+		oauthGroup.GET("/home", handler.HomeView)
+		oauthGroup.GET("/logout", oauthController.Logout)
+
+		secured := oauthGroup.Group("/")
+		secured.Use(middleware.AuthMiddleware())
+		{
+			secured.GET("/profile", handler.ProfileView)
+		}
+	}
 
 	return router
-
 }
