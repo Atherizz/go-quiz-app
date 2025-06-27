@@ -16,11 +16,11 @@ func NewQuizRepository() *QuizRepository {
 	return &QuizRepository{}
 }
 
-func (repo *QuizRepository) Insert(ctx context.Context, db *gorm.DB, quiz model.Quiz) model.Quiz {
+func (repo *QuizRepository) Insert(ctx context.Context, db *gorm.DB, quiz model.Quiz) (model.Quiz, error) {
 
 	newQuiz := model.Quiz{
-		Title: quiz.Title,
-		SubjectId: quiz.SubjectId,
+		Title:       quiz.Title,
+		SubjectId:   quiz.SubjectId,
 		Description: quiz.Description,
 	}
 
@@ -28,50 +28,74 @@ func (repo *QuizRepository) Insert(ctx context.Context, db *gorm.DB, quiz model.
 
 	if result.Error != nil {
 		log.Printf("Error creating Quiz: %v", result.Error)
-		return model.Quiz{}
+		return model.Quiz{}, result.Error
 	}
 
 	if result.RowsAffected == 0 {
-		return model.Quiz{}
+		return model.Quiz{}, result.Error
 	}
 
-	return newQuiz
+	return newQuiz, nil
 }
 
-func (repo *QuizRepository) Update(ctx context.Context, db *gorm.DB, quiz model.Quiz) model.Quiz {
+func (repo *QuizRepository) Update(ctx context.Context, db *gorm.DB, quiz model.Quiz) (model.Quiz, error) {
 
 	updatedQuiz := model.Quiz{
-		Model: gorm.Model{ID: quiz.ID},
-		Title: quiz.Title,
-		Description: quiz.Description ,
+		Model:       gorm.Model{ID: quiz.ID},
+		Title:       quiz.Title,
+		Description: quiz.Description,
 	}
 
 	result := db.Model(&updatedQuiz).Updates(model.Quiz{Title: updatedQuiz.Title, Description: updatedQuiz.Description})
 
 	if result.Error != nil {
 		log.Printf("Error creating Quiz: %v", result.Error)
-		return model.Quiz{}
+		return model.Quiz{}, result.Error
 	}
 
 	if result.RowsAffected == 0 {
-		return model.Quiz{}
+		return model.Quiz{}, result.Error
 	}
 
-	return updatedQuiz
+	return updatedQuiz, nil
 }
 
-func (repo *QuizRepository) GetAll(ctx context.Context, db *gorm.DB) []model.Quiz {
+func (repo *QuizRepository) GetAll(ctx context.Context, db *gorm.DB) ([]model.Quiz, error) {
 
-	var quizs []model.Quiz
+	var quizzes []model.Quiz
 
-	result := db.Find(&quizs)
+	result := db.Model(&model.Quiz{}).Preload("Questions").Find(&quizzes)
 
 	if result.Error != nil {
 		fmt.Println("Error saat ambil data Quiz:", result.Error)
-		return []model.Quiz{}
+		return []model.Quiz{}, result.Error
 	}
 
-	return quizs
+	return quizzes, nil
+}
+
+func (repo *QuizRepository) GetQuizGroupBySubject(ctx context.Context, db *gorm.DB, idSubject int) ([]model.Quiz, error) {
+
+	var quizzes []model.Quiz
+
+	result := db.Model(&model.Quiz{}).Where("subject_id = ?", idSubject).Preload("Questions").Preload("Subject").Find(&quizzes)
+
+	if result.Error != nil {
+		fmt.Println("Error saat ambil data Quiz:", result.Error)
+		return []model.Quiz{}, result.Error
+	}
+
+	return quizzes, nil
+}
+
+func (repo *QuizRepository) Delete(ctx context.Context, db *gorm.DB, id int) error {
+	result := db.Delete(&model.Quiz{}, id)
+
+	if result.Error != nil || result.RowsAffected == 0 {
+		return result.Error
+	}
+
+	return nil
 }
 
 func (repo *QuizRepository) GetQuizById(ctx context.Context, db *gorm.DB, id int) (model.Quiz, error) {

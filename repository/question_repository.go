@@ -16,7 +16,7 @@ func NewQuestionRepository() *QuestionRepository {
 	return &QuestionRepository{}
 }
 
-func (repo *QuestionRepository) Insert(ctx context.Context, db *gorm.DB, question model.Question) model.Question {
+func (repo *QuestionRepository) Insert(ctx context.Context, db *gorm.DB, question model.Question) (model.Question,error) {
 
 	newQuestion := model.Question{
 		QuizId: question.QuizId,
@@ -27,17 +27,17 @@ func (repo *QuestionRepository) Insert(ctx context.Context, db *gorm.DB, questio
 
 	if result.Error != nil {
 		log.Printf("Error creating Question: %v", result.Error)
-		return model.Question{}
+		return model.Question{}, result.Error
 	}
 
 	if result.RowsAffected == 0 {
-		return model.Question{}
+		return model.Question{}, result.Error
 	}
 
-	return newQuestion
+	return newQuestion, nil
 }
 
-func (repo *QuestionRepository) Update(ctx context.Context, db *gorm.DB, question model.Question) model.Question {
+func (repo *QuestionRepository) Update(ctx context.Context, db *gorm.DB, question model.Question) (model.Question,error) {
 
 	updatedQuestion := model.Question{
 		Model: gorm.Model{ID: question.ID},
@@ -47,29 +47,40 @@ func (repo *QuestionRepository) Update(ctx context.Context, db *gorm.DB, questio
 
 	if result.Error != nil {
 		log.Printf("Error creating Question: %v", result.Error)
-		return model.Question{}
+		return model.Question{}, result.Error
 	}
 
 	if result.RowsAffected == 0 {
-		return model.Question{}
+		return model.Question{}, result.Error
 	}
 
-	return updatedQuestion
+	return updatedQuestion, nil
 }
 
-func (repo *QuestionRepository) GetAll(ctx context.Context, db *gorm.DB) []model.Question {
+func (repo *QuestionRepository) GetQuestionGroupByQuiz(ctx context.Context, db *gorm.DB, quizId int) ([]model.Question,error) {
 
 	var questions []model.Question
 
-	result := db.Find(&questions)
+	result := db.Model(&model.Question{}).Where("quiz_id = ?", quizId).Preload("AnswerOptions").Preload("Quiz").Find(&questions)
 
 	if result.Error != nil {
 		fmt.Println("Error saat ambil data Question:", result.Error)
-		return []model.Question{}
+		return []model.Question{}, result.Error
 	}
 
-	return questions
+	return questions, nil
 }
+
+func (repo *QuestionRepository) Delete(ctx context.Context, db *gorm.DB, id int) (error) {
+	result := db.Delete(&model.Question{}, id)
+
+	if result.Error != nil || result.RowsAffected == 0 {
+		return result.Error
+	}
+
+	return  nil
+}
+
 
 func (repo *QuestionRepository) GetQuestionById(ctx context.Context, db *gorm.DB, id int) (model.Question, error) {
 	var question model.Question

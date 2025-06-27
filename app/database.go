@@ -2,6 +2,8 @@ package app
 
 import (
 	"google-oauth/helper"
+	"google-oauth/model"
+	"log"
 	"time"
 
 	"gorm.io/driver/mysql"
@@ -17,6 +19,11 @@ func NewDB() *gorm.DB {
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err)
+	}
+	
+	err = db.AutoMigrate(&model.User{}, &model.Subject{}, &model.Quiz{}, &model.Question{}, &model.AnswerOption{}, &model.UserAnswer{}, &model.UserQuizResult{})
+	if err != nil {
+		log.Fatal("Gagal migrasi:", err)
 	}
 
 	sql, err := db.DB()

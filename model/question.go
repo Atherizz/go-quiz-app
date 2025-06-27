@@ -6,5 +6,6 @@ type Question struct {
 	gorm.Model
 	QuizId       int
 	Quiz         Quiz `gorm:"foreignKey:QuizId;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	AnswerOptions []AnswerOption	
 	QuestionText string
 }

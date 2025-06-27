@@ -1,1 +1,0 @@
-ALTER TABLE quiz DROP COLUMN subject_id;
