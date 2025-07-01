@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"google-oauth/model"
-	"log"
 
 	"gorm.io/gorm"
 )
@@ -16,28 +15,31 @@ func NewUserQuizResultRepository() *UserQuizResultRepository {
 	return &UserQuizResultRepository{}
 }
 
-func (repo *UserQuizResultRepository) Insert(ctx context.Context, db *gorm.DB, userQuizResult model.UserQuizResult) (model.UserQuizResult, error) {
-	// CorrectAnswers int
-	newUserQuizResult := model.UserQuizResult{
-		UserId:         userQuizResult.UserId,
-		QuizId:         userQuizResult.QuizId,
-		Score: userQuizResult.Score,
-		TotalQuestions: userQuizResult.TotalQuestions,
-		CorrectAnswers: userQuizResult.CorrectAnswers,
-	}
+func (repo *UserQuizResultRepository) GetQuizResultGroupByQuizAndUser(ctx context.Context, db *gorm.DB, quizId int, userId int) (model.UserQuizResult, error) {
+	var userQuizResult model.UserQuizResult
 
-	result := db.Create(&newUserQuizResult)
+	result := db.Model(&model.UserQuizResult{}).Where("quiz_id = ? AND user_id = ?", quizId, userId).First(&userQuizResult)
 
 	if result.Error != nil {
-		log.Printf("Error creating UserQuizResult: %v", result.Error)
+		fmt.Println("Error saat ambil data UserQuizResult:", result.Error)
 		return model.UserQuizResult{}, result.Error
 	}
 
-	if result.RowsAffected == 0 {
-		return model.UserQuizResult{}, result.Error
+	return userQuizResult, nil
+}
+
+func (repo *UserQuizResultRepository) GetUserQuizResultGroupByQuiz(ctx context.Context, db *gorm.DB, quizId int) ([]model.UserQuizResult, error) {
+
+	var userQuizResults []model.UserQuizResult
+
+	result := db.Model(&model.UserQuizResult{}).Where("quiz_id = ?", quizId).Preload("User").Preload("Quiz").Find(&userQuizResults)
+
+	if result.Error != nil {
+		fmt.Println("Error saat ambil data UserQuizResult:", result.Error)
+		return []model.UserQuizResult{}, result.Error
 	}
 
-	return newUserQuizResult, nil
+	return userQuizResults, nil
 }
 
 func (repo *UserQuizResultRepository) GetUserQuizResultGroupByUser(ctx context.Context, db *gorm.DB, userId int) ([]model.UserQuizResult, error) {
@@ -62,17 +64,4 @@ func (repo *UserQuizResultRepository) Delete(ctx context.Context, db *gorm.DB, i
 	}
 
 	return nil
-}
-
-func (repo *UserQuizResultRepository) GetUserQuizResultById(ctx context.Context, db *gorm.DB, id int) (model.UserQuizResult, error) {
-	var UserQuizResult model.UserQuizResult
-
-	err := db.Where("id = ?", id).
-		First(&UserQuizResult).Error
-
-	if err != nil {
-		return model.UserQuizResult{}, err
-	}
-
-	return UserQuizResult, nil
 }

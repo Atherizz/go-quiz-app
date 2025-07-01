@@ -9,3 +9,8 @@ type UserResponse struct {
 	Provider string `json:"provider"`
 	Role string `json:"role"`
 }
+
+type UserResponseMini struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}

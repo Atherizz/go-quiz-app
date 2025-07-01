@@ -46,11 +46,7 @@ func (controller *OauthController) RegisterDefault(c *gin.Context) {
 
 	response := controller.Service.RegisterDefault(c.Request.Context(), registeredUser)
 
-	helper.WriteEncodeResponse(c.Writer, web.WebResponse{
-		Code:   200,
-		Status: "OK",
-		Data:   response,
-	})
+	c.JSON(http.StatusOK, response)
 
 }
 

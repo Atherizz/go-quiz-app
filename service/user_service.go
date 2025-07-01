@@ -6,22 +6,18 @@ import (
 	"google-oauth/model"
 	"google-oauth/repository"
 	"google-oauth/web"
-
-	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 )
 
 type UserService struct {
 	Repository repository.UserRepository
 	DB         *gorm.DB
-	Validate   *validator.Validate
 }
 
-func NewUserService(repo repository.UserRepository, db *gorm.DB, validator *validator.Validate) *UserService {
+func NewUserService(repo repository.UserRepository, db *gorm.DB) *UserService {
 	return &UserService{
 		Repository: repo,
 		DB:         db,
-		Validate:   validator,
 	}
 }
 
@@ -49,15 +45,10 @@ func (service *UserService) RegisterFromGoogle(ctx context.Context, request mode
 	return response
 }
 
-func (service *UserService) RegisterDefault(ctx context.Context, request web.UserRequest) web.UserResponse {
-	err := service.Validate.Struct(request)
-	if err != nil {
-		return web.UserResponse{}
-	}
-	
+func (service *UserService) RegisterDefault(ctx context.Context, request web.UserRequest) web.UserResponse {	
 	var response web.UserResponse
 
-	service.DB.Transaction(func(tx *gorm.DB) error {
+	     service.DB.Transaction(func(tx *gorm.DB) error {
 
 		user := model.User{
 			Name:     request.Name,

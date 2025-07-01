@@ -13,3 +13,9 @@ type UserAnswer struct {
 	SelectedOption int
 	IsCorrect bool
 }
+
+type QuizAnswerSummary struct {
+	Score float64
+	TotalQuestions  int64
+	CorrectAnswers  int64
+}

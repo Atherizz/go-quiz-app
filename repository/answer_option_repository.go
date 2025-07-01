@@ -21,6 +21,7 @@ func (repo *AnswerOptionRepository) Insert(ctx context.Context, db *gorm.DB, ans
 		QuestionId: answerOption.QuestionId,
 		OptionText: answerOption.OptionText,
 		IsCorrect: answerOption.IsCorrect,
+		OptionNumber: answerOption.OptionNumber,
 	}
 
 	result := db.Create(&newAnswerOption)
@@ -44,6 +45,7 @@ func (repo *AnswerOptionRepository) Update(ctx context.Context, db *gorm.DB, ans
 		QuestionId: answerOption.QuestionId,
 		OptionText: answerOption.OptionText,
 		IsCorrect: answerOption.IsCorrect,
+		OptionNumber: answerOption.OptionNumber,
 	}
 	result := db.Model(&updatedAnswerOption).Updates(model.AnswerOption{QuestionId: updatedAnswerOption.QuestionId, OptionText: updatedAnswerOption.OptionText, IsCorrect: updatedAnswerOption.IsCorrect})
 
