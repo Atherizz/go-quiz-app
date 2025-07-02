@@ -48,11 +48,11 @@ func (service *UserAnswerService) SaveAllAnswers(ctx context.Context, request we
 }
 
 
-func (service *UserAnswerService) Delete(ctx context.Context, db *gorm.DB, id int) (error) {
+func (service *UserAnswerService) Delete(ctx context.Context, id int) (error) {
 
 	err := service.DB.Transaction(func(tx *gorm.DB) error {
 
-		err := service.Repository.Delete(ctx, db, id)
+		err := service.Repository.Delete(ctx, tx, id)
 
 		if err != nil {
 		return err

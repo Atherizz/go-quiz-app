@@ -74,7 +74,7 @@ func (service *QuestionService) Update(ctx context.Context, request web.Question
 
 }
 
-func (service *QuestionService) GetQuestionGroupByQuiz(ctx context.Context, db *gorm.DB, id int) ([]web.QuestionResponse, error) {
+func (service *QuestionService) GetQuestionGroupByQuiz(ctx context.Context, id int) ([]web.QuestionResponse, error) {
 
 	
 	var responses []web.QuestionResponse
@@ -97,12 +97,12 @@ func (service *QuestionService) GetQuestionGroupByQuiz(ctx context.Context, db *
 	return responses, err
 }
 
-func (service *QuestionService) Delete(ctx context.Context, db *gorm.DB, id int) (error) {
+func (service *QuestionService) Delete(ctx context.Context, id int) (error) {
 
 
 	err := service.DB.Transaction(func(tx *gorm.DB) error {
 
-		err := service.Repository.Delete(ctx, db, id)
+		err := service.Repository.Delete(ctx, tx, id)
 
 		if err != nil {
 		return err
@@ -115,13 +115,13 @@ func (service *QuestionService) Delete(ctx context.Context, db *gorm.DB, id int)
 
 }
 
-func (service *QuestionService) GetQuestionById(ctx context.Context, db *gorm.DB, id int) (web.QuestionResponse, error) {
+func (service *QuestionService) GetQuestionById(ctx context.Context, id int) (web.QuestionResponse, error) {
 
 	var response web.QuestionResponse
 
 	err := service.DB.Transaction(func(tx *gorm.DB) error {
 
-		Question, err := service.Repository.GetQuestionById(ctx, db, id)
+		Question, err := service.Repository.GetQuestionById(ctx, tx, id)
 
 		if err != nil {
 		return err

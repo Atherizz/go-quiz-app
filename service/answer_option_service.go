@@ -77,7 +77,7 @@ func (service *AnswerOptionService) Update(ctx context.Context, request web.Answ
 
 }
 
-func (service *AnswerOptionService) GetAnswerOptionGroupByQuestion(ctx context.Context, db *gorm.DB, id int) ([]web.AnswerOptionResponse, error) {
+func (service *AnswerOptionService) GetAnswerOptionGroupByQuestion(ctx context.Context, id int) ([]web.AnswerOptionResponse, error) {
 
 	
 	var responses []web.AnswerOptionResponse
@@ -100,12 +100,12 @@ func (service *AnswerOptionService) GetAnswerOptionGroupByQuestion(ctx context.C
 	return responses, err
 }
 
-func (service *AnswerOptionService) Delete(ctx context.Context, db *gorm.DB, id int) (error) {
+func (service *AnswerOptionService) Delete(ctx context.Context, id int) (error) {
 
 
 	err := service.DB.Transaction(func(tx *gorm.DB) error {
 
-		err := service.Repository.Delete(ctx, db, id)
+		err := service.Repository.Delete(ctx, tx, id)
 
 		if err != nil {
 		return err
@@ -118,13 +118,13 @@ func (service *AnswerOptionService) Delete(ctx context.Context, db *gorm.DB, id 
 
 }
 
-func (service *AnswerOptionService) GetAnswerOptionById(ctx context.Context, db *gorm.DB, id int) (web.AnswerOptionResponse, error) {
+func (service *AnswerOptionService) GetAnswerOptionById(ctx context.Context, id int) (web.AnswerOptionResponse, error) {
 
 	var response web.AnswerOptionResponse
 
 	err := service.DB.Transaction(func(tx *gorm.DB) error {
 
-		AnswerOption, err := service.Repository.GetAnswerOptionById(ctx, db, id)
+		AnswerOption, err := service.Repository.GetAnswerOptionById(ctx, tx, id)
 
 		if err != nil {
 		return err

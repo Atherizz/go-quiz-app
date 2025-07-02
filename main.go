@@ -16,9 +16,19 @@ func main() {
 
 	userRepository := repository.NewUserRepository()
 	userService := service.NewUserService(*userRepository, db)
-	userController := handler.NewOauthController(userService)
+	userController := handler.NewAuthHandler(userService)
 
-	router := app.NewRouter(userController)
+	subjectRepository := repository.NewSubjectRepository()
+	subjectService := service.NewSubjectService(*subjectRepository, db)
+	subjectController := handler.NewSubjectHandler(subjectService)
+
+	appHandler := handler.AppHandler{
+		Auth: userController,
+		Subject: subjectController,
+
+	}
+
+	router := app.NewRouter(appHandler)
 	gob.Register(model.User{})
 
 	router.Run(":8000")

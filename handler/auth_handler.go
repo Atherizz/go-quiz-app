@@ -15,28 +15,28 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type OauthController struct {
-	Service service.UserService
+type AuthHandler struct {
+	Service *service.UserService
 }
 
-func NewOauthController(service *service.UserService) *OauthController {
-	return &OauthController{
-		Service: *service,
+func NewAuthHandler(service *service.UserService) *AuthHandler {
+	return &AuthHandler{
+		Service: service,
 	}
 }
 
-func (controller *OauthController) BasicOauth(c *gin.Context) {
+func (handler *AuthHandler) BasicOauth(c *gin.Context) {
 	fmt.Fprint(c.Writer, "selamat datang di endpoint basic auth! anda berhasil terautentikasi \n")
 }
 
-func (controller *OauthController) LoginOauth(c *gin.Context) {
+func (handler *AuthHandler) LoginOauth(c *gin.Context) {
 	url := middleware.OauthConfig.AuthCodeURL("", oauth2.AccessTypeOffline)
 	c.Redirect(http.StatusSeeOther, url)
 	// http.Redirect(c.Writer, c.Request, url, http.StatusSeeOther)
 
 }
 
-func (controller *OauthController) RegisterDefault(c *gin.Context) {
+func (handler *AuthHandler) RegisterDefault(c *gin.Context) {
 	registeredUser := web.UserRequest{}
 
 	if err := c.ShouldBindJSON(&registeredUser); err != nil {
@@ -44,13 +44,13 @@ func (controller *OauthController) RegisterDefault(c *gin.Context) {
 		return
 	}
 
-	response := controller.Service.RegisterDefault(c.Request.Context(), registeredUser)
+	response := handler.Service.RegisterDefault(c.Request.Context(), registeredUser)
 
 	c.JSON(http.StatusOK, response)
 
 }
 
-func (controller *OauthController) Callback(c *gin.Context) {
+func (handler *AuthHandler) Callback(c *gin.Context) {
 	code := c.Request.URL.Query().Get("code")
 	token, err := middleware.OauthConfig.Exchange(c.Request.Context(), code)
 	if err != nil {
@@ -86,7 +86,7 @@ func (controller *OauthController) Callback(c *gin.Context) {
 
 	fmt.Println("OAuth token:", cookie)
 
-	userResponse := controller.Service.GetUserByEmail(c.Request.Context(), tokenPayload.Email)
+	userResponse := handler.Service.GetUserByEmail(c.Request.Context(), tokenPayload.Email)
 
 	if userResponse.Email == "" {
 		userRequest := model.User{
@@ -96,7 +96,7 @@ func (controller *OauthController) Callback(c *gin.Context) {
 			Picture:  tokenPayload.Picture,
 		}
 
-		controller.Service.RegisterFromGoogle(c.Request.Context(), userRequest)
+		handler.Service.RegisterFromGoogle(c.Request.Context(), userRequest)
 	}
 
 	session, _ := helper.Store.Get(c.Request, "user_info")
@@ -117,7 +117,7 @@ func (controller *OauthController) Callback(c *gin.Context) {
 	// http.Redirect(c.Writer, c.Request, "/home", http.StatusFound)
 }
 
-func (controller *OauthController) Logout(c *gin.Context) {
+func (handler *AuthHandler) Logout(c *gin.Context) {
 
 	c.SetCookie("oauth_token", "", -1, "/", "localhost", false, true)
 	c.Redirect(http.StatusFound, "/login")

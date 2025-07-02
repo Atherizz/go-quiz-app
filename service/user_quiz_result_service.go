@@ -22,7 +22,7 @@ func NewUserQuizResultService(repo repository.UserQuizResultRepository, db *gorm
 	}
 }
 
-func (service *UserQuizResultService) GetQuizResultGroupByQuizAndUser(ctx context.Context, db *gorm.DB, quizId int, userId int) (web.UserQuizResultResponse, error) {
+func (service *UserQuizResultService) GetQuizResultGroupByQuizAndUser(ctx context.Context, quizId int, userId int) (web.UserQuizResultResponse, error) {
 
 	var response web.UserQuizResultResponse
 
@@ -49,13 +49,13 @@ func (service *UserQuizResultService) GetQuizResultGroupByQuizAndUser(ctx contex
 	return response, err
 }
 
-func (service *UserQuizResultService) GetUserQuizResultGroupByQuiz(ctx context.Context, db *gorm.DB, id int) ([]web.UserQuizResultResponse, error) {
+func (service *UserQuizResultService) GetUserQuizResultGroupByQuiz(ctx context.Context, id int) ([]web.UserQuizResultResponse, error) {
 
 	var responses []web.UserQuizResultResponse
 
 	err := service.DB.Transaction(func(tx *gorm.DB) error {
 
-		userQuizResults, err := service.Repository.GetUserQuizResultGroupByQuiz(ctx, db, id)
+		userQuizResults, err := service.Repository.GetUserQuizResultGroupByQuiz(ctx, tx, id)
 
 		if err != nil {
 			return err
@@ -73,13 +73,13 @@ func (service *UserQuizResultService) GetUserQuizResultGroupByQuiz(ctx context.C
 
 }
 
-func (service *UserQuizResultService) GetUserQuizResultGroupByUser(ctx context.Context, db *gorm.DB, id int) ([]web.UserQuizResultResponse, error) {
+func (service *UserQuizResultService) GetUserQuizResultGroupByUser(ctx context.Context,id int) ([]web.UserQuizResultResponse, error) {
 
 	var responses []web.UserQuizResultResponse
 
 	err := service.DB.Transaction(func(tx *gorm.DB) error {
 
-		userQuizResults, err := service.Repository.GetUserQuizResultGroupByUser(ctx, db, id)
+		userQuizResults, err := service.Repository.GetUserQuizResultGroupByUser(ctx, tx, id)
 
 		if err != nil {
 			return err
@@ -99,11 +99,11 @@ func (service *UserQuizResultService) GetUserQuizResultGroupByUser(ctx context.C
 
 
 
-func (service *UserQuizResultService) Delete(ctx context.Context, db *gorm.DB, id int) error {
+func (service *UserQuizResultService) Delete(ctx context.Context,id int) error {
 
 	err :=service.DB.Transaction(func(tx *gorm.DB) error {
 
-		err := service.Repository.Delete(ctx, db, id)
+		err := service.Repository.Delete(ctx, tx, id)
 
 		if err != nil {
 			return err

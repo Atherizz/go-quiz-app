@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ProfileApi(c *gin.Context) {
+func GetUserProfile(c *gin.Context) {
 
 	user, exists := c.Get("user")
 	if !exists {

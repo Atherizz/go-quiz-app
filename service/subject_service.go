@@ -72,7 +72,7 @@ func (service *SubjectService) Update(ctx context.Context, request web.SubjectRe
 
 }
 
-func (service *SubjectService) GetAll(ctx context.Context, db *gorm.DB) ([]web.SubjectResponse, error) {
+func (service *SubjectService) GetAll(ctx context.Context) ([]web.SubjectResponse, error) {
 
 	
 	var responses []web.SubjectResponse
@@ -95,11 +95,11 @@ func (service *SubjectService) GetAll(ctx context.Context, db *gorm.DB) ([]web.S
 	return responses, err
 }
 
-func (service *SubjectService) Delete(ctx context.Context, db *gorm.DB, id int) (error) {
+func (service *SubjectService) Delete(ctx context.Context, id int) (error) {
 
 	err := service.DB.Transaction(func(tx *gorm.DB) error {
 
-		err := service.Repository.Delete(ctx, db, id)
+		err := service.Repository.Delete(ctx, tx, id)
 
 		if err != nil {
 		return err
@@ -112,13 +112,13 @@ func (service *SubjectService) Delete(ctx context.Context, db *gorm.DB, id int) 
 
 }
 
-func (service *SubjectService) GetSubjectById(ctx context.Context, db *gorm.DB, id int) (web.SubjectResponse, error) {
+func (service *SubjectService) GetSubjectById(ctx context.Context, id int) (web.SubjectResponse, error) {
 
 	var response web.SubjectResponse
 
 	err := service.DB.Transaction(func(tx *gorm.DB) error {
 
-		subject, err := service.Repository.GetSubjectById(ctx, db, id)
+		subject, err := service.Repository.GetSubjectById(ctx, tx, id)
 
 		if err != nil {
 		return err

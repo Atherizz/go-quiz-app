@@ -72,14 +72,6 @@ func ToAnswerOptionResponse(answerOption model.AnswerOption) web.AnswerOptionRes
 }
 
 
-// func ToSubmitQuizResponse(userAnswer model.UserAnswer) web.SubmitQuizResponse {
-// 	return web.SubmitQuizResponse{
-// 		UserId:         userAnswer.UserId,
-// 		QuizId:         userAnswer.QuizId,
-// 		Answers: userAnswer.,
-// 	}
-// }
-
 
 func ToUserQuizResultResponse(userQuizResult model.UserQuizResult) web.UserQuizResultResponse {
 	return web.UserQuizResultResponse{
