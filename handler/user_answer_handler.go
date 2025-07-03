@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"google-oauth/model"
 	"google-oauth/service"
 	"google-oauth/web"
 	"net/http"
@@ -26,6 +27,15 @@ func (handler *UserAnswerHandler) SaveAllAnswers(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(404, gin.H{"error": "value not found"})
+		return
+	}
+	authUser := user.(model.User)
+	
+	newUserAnswer.UserId = authUser.ID
 
 	response, err := handler.Service.SaveAllAnswers(c.Request.Context(), newUserAnswer)
 

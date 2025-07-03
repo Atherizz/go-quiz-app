@@ -24,11 +24,11 @@ func NewRouter(appHandler handler.AppHandler) *gin.Engine {
 		{
 			protected.GET("/user", handler.GetUserProfile)
 
-			protected.GET("/subject", appHandler.Subject.GetAll)
-			protected.GET("/subject/:id", appHandler.Subject.GetSubjectById)
-			protected.DELETE("/subject/:id", appHandler.Subject.Delete)
-			protected.POST("/subject", appHandler.Subject.Insert)
-			protected.PUT("/subject/:id", appHandler.Subject.Update)
+			protected.GET("/subjects", appHandler.Subject.GetAll)
+			protected.GET("/subjects/:id", appHandler.Subject.GetSubjectById)
+			protected.POST("/subjects", appHandler.Subject.Insert)
+			protected.PUT("/subjects/:id", appHandler.Subject.Update)
+			protected.DELETE("/subjects/:id", appHandler.Subject.Delete)
 
 			protected.GET("/subjects/:subjectId/quizzes", appHandler.Quiz.GetQuizGroupBySubject)
 			protected.POST("/subjects/:subjectId/quizzes", appHandler.Quiz.Insert)
@@ -42,7 +42,19 @@ func NewRouter(appHandler handler.AppHandler) *gin.Engine {
 			protected.PUT("/questions/:id", appHandler.Question.Update)
 			protected.DELETE("/questions/:id", appHandler.Question.Delete)
 
-	
+			protected.GET("/questions/:questionId/answer_options", appHandler.AnswerOption.GetAnswerOptionGroupByQuestion)
+			protected.POST("/questions/:questionId/answer_options", appHandler.AnswerOption.Insert)
+			protected.PUT("/answer_options/:id", appHandler.AnswerOption.Update)
+			protected.GET("/answer_options/:id", appHandler.AnswerOption.GetAnswerOptionById)
+			protected.DELETE("/answer_options/:id", appHandler.AnswerOption.Delete)
+
+			protected.POST("/quizzes/:quizId/user_answers", appHandler.UserAnswer.SaveAllAnswers)
+			protected.DELETE("/user_answers/:id", appHandler.UserAnswer.Delete)
+
+			// leaderbord
+			protected.GET("/quizzes/:quizId/user_quiz_result", appHandler.UserQuizResult.GetUserQuizResultGroupByQuiz)
+			protected.GET("/quizzes/:quizId/my_quiz_result", appHandler.UserQuizResult.GetQuizResultGroupByQuizAndUser)
+			protected.GET("/my_quiz_result", appHandler.UserQuizResult.GetUserQuizResultGroupByUser)
 
 		}
 	}

@@ -6,7 +6,7 @@ type UserAnswerInput struct {
 }
 
 type SubmitQuizRequest struct {
-	UserId  int               `json:"user_id" binding:"required"`
+	UserId  int               `json:"user_id"`
 	QuizId  int               `json:"quiz_id" binding:"required"`
 	Answers []UserAnswerInput `json:"answers" binding:"required,dive"`
 }

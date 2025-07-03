@@ -1,0 +1,426 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Google OAuth Quiz API",
+    "version": "1.0.0",
+    "description": "Dokumentasi lengkap RESTful API untuk aplikasi manajemen kuis berbasis Google OAuth. API ini mencakup fitur-fitur seperti manajemen subject, quiz, pertanyaan, opsi jawaban, pengumpulan jawaban user, dan hasil kuis."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/register": {
+      "post": {
+        "summary": "Register akun user baru",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User berhasil didaftarkan"
+          },
+          "400": {
+            "description": "Request tidak valid"
+          }
+        }
+      }
+    },
+    "/user": {
+      "get": {
+        "summary": "Mendapatkan data user yang sedang login",
+        "tags": ["User"],
+        "responses": {
+          "200": {
+            "description": "Data user yang sedang login"
+          },
+          "401": {
+            "description": "Belum login / token tidak valid"
+          }
+        }
+      }
+    },
+    "/subjects": {
+      "get": {
+        "summary": "Mengambil semua subject yang tersedia",
+        "tags": ["Subject"],
+        "responses": {
+          "200": {
+            "description": "List subject"
+          }
+        }
+      },
+      "post": {
+        "summary": "Membuat subject baru",
+        "tags": ["Subject"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubjectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subject berhasil dibuat"
+          },
+          "400": {
+            "description": "Request tidak valid"
+          }
+        }
+      }
+    },
+    "/subjects/{subjectId}/quizzes": {
+      "get": {
+        "summary": "Mengambil semua kuis berdasarkan subject ID",
+        "tags": ["Quiz"],
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "List quiz dari subject tertentu" }
+        }
+      },
+      "post": {
+        "summary": "Membuat kuis baru dalam subject tertentu",
+        "tags": ["Quiz"],
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuizRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Quiz berhasil dibuat" }
+        }
+      }
+    },
+    "/quizzes/{id}": {
+      "get": {
+        "summary": "Mengambil detail quiz berdasarkan ID",
+        "tags": ["Quiz"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Detail quiz" },
+          "404": { "description": "Quiz tidak ditemukan" }
+        }
+      },
+      "put": {
+        "summary": "Memperbarui quiz",
+        "tags": ["Quiz"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/QuizRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Quiz berhasil diupdate" }
+        }
+      },
+      "delete": {
+        "summary": "Menghapus quiz berdasarkan ID",
+        "tags": ["Quiz"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "204": { "description": "Quiz berhasil dihapus" }
+        }
+      }
+    },
+    "/quizzes/{quizId}/questions": {
+      "get": {
+        "summary": "Mengambil pertanyaan berdasarkan quiz",
+        "tags": ["Question"],
+        "parameters": [
+          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "List pertanyaan" }
+        }
+      },
+      "post": {
+        "summary": "Menambahkan pertanyaan baru ke quiz",
+        "tags": ["Question"],
+        "parameters": [
+          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/QuestionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Pertanyaan berhasil ditambahkan" }
+        }
+      }
+    },
+    "/questions/{id}": {
+      "get": {
+        "summary": "Mengambil detail pertanyaan",
+        "tags": ["Question"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Detail pertanyaan" }
+        }
+      },
+      "put": {
+        "summary": "Update pertanyaan",
+        "tags": ["Question"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/QuestionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Berhasil update pertanyaan" }
+        }
+      },
+      "delete": {
+        "summary": "Hapus pertanyaan",
+        "tags": ["Question"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "204": { "description": "Pertanyaan dihapus" }
+        }
+      }
+    },
+    "/questions/{questionId}/answer_options": {
+      "get": {
+        "summary": "Ambil opsi jawaban berdasarkan pertanyaan",
+        "tags": ["AnswerOption"],
+        "parameters": [
+          { "name": "questionId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "List opsi jawaban" } }
+      },
+      "post": {
+        "summary": "Tambahkan opsi jawaban",
+        "tags": ["AnswerOption"],
+        "parameters": [
+          { "name": "questionId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AnswerOptionRequest" }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Opsi jawaban ditambahkan" } }
+      }
+    },
+    "/answer_options/{id}": {
+      "put": {
+        "summary": "Update opsi jawaban",
+        "tags": ["AnswerOption"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AnswerOptionRequest" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Berhasil update opsi" } }
+      },
+      "get": {
+        "summary": "Ambil opsi jawaban berdasarkan ID",
+        "tags": ["AnswerOption"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Detail opsi" } }
+      },
+      "delete": {
+        "summary": "Hapus opsi jawaban",
+        "tags": ["AnswerOption"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "204": { "description": "Opsi dihapus" } }
+      }
+    },
+    "/quizzes/{quizId}/user_answers": {
+      "post": {
+        "summary": "Submit semua jawaban user untuk kuis tertentu",
+        "tags": ["UserAnswer"],
+        "parameters": [
+          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserAnswerRequest" }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Jawaban disimpan" } }
+      }
+    },
+    "/user_answers/{id}": {
+      "delete": {
+        "summary": "Hapus satu jawaban user",
+        "tags": ["UserAnswer"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "204": { "description": "Jawaban dihapus" } }
+      }
+    },
+    "/quizzes/{quizId}/user_quiz_result": {
+      "get": {
+        "summary": "Ambil semua hasil kuis berdasarkan quiz",
+        "tags": ["UserQuizResult"],
+        "parameters": [
+          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "List hasil kuis" } }
+      }
+    },
+    "/quizzes/{quizId}/my_quiz_result": {
+      "get": {
+        "summary": "Ambil hasil kuis saya berdasarkan quiz",
+        "tags": ["UserQuizResult"],
+        "parameters": [
+          { "name": "quizId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Hasil kuis saya" } }
+      }
+    },
+    "/my_quiz_result": {
+      "get": {
+        "summary": "Ambil semua hasil kuis user saat ini",
+        "tags": ["UserQuizResult"],
+        "responses": { "200": { "description": "List hasil kuis user" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "password": { "type": "string" }
+        },
+        "required": ["name", "email", "password"]
+      },
+      "SubjectRequest": {
+        "type": "object",
+        "properties": {
+          "subject_name": { "type": "string" }
+        },
+        "required": ["subject_name"]
+      },
+      "QuizRequest": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string" }
+        },
+        "required": ["title"]
+      },
+      "QuestionRequest": {
+        "type": "object",
+        "properties": {
+          "question_text": { "type": "string" }
+        },
+        "required": ["question_text"]
+      },
+      "AnswerOptionRequest": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string" },
+          "is_correct": { "type": "boolean" }
+        },
+        "required": ["text", "is_correct"]
+      },
+      "UserAnswerRequest": {
+        "type": "object",
+        "properties": {
+          "quiz_id": { "type": "integer" },
+          "answers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "question_id": { "type": "integer" },
+                "selected_option": { "type": "integer" }
+              },
+              "required": ["question_id", "selected_option"]
+            }
+          }
+        },
+        "required": ["quiz_id", "answers"]
+      }
+    }
+  },
+  "tags": [
+    { "name": "Auth" },
+    { "name": "User" },
+    { "name": "Subject" },
+    { "name": "Quiz" },
+    { "name": "Question" },
+    { "name": "AnswerOption" },
+    { "name": "UserAnswer" },
+    { "name": "UserQuizResult" }
+  ]
+}

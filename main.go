@@ -7,12 +7,13 @@ import (
 	"google-oauth/model"
 	"google-oauth/repository"
 	"google-oauth/service"
+
+	"github.com/gin-contrib/cors"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
 	db := app.NewDB()
-
 
 	userRepository := repository.NewUserRepository()
 	userService := service.NewUserService(*userRepository, db)
@@ -23,12 +24,13 @@ func main() {
 	subjectController := handler.NewSubjectHandler(subjectService)
 
 	appHandler := handler.AppHandler{
-		Auth: userController,
+		Auth:    userController,
 		Subject: subjectController,
-
 	}
 
 	router := app.NewRouter(appHandler)
+	router.Use(cors.Default())
+	
 	gob.Register(model.User{})
 
 	router.Run(":8000")

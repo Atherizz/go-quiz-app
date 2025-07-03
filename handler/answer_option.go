@@ -22,12 +22,21 @@ func NewAnswerOptionHandler(service *service.AnswerOptionService) *AnswerOptionH
 func (handler *AnswerOptionHandler) Insert(c *gin.Context) {
 	newAnswerOption := web.AnswerOptionRequest{}
 
-	if err := c.ShouldBindJSON(&newAnswerOption); err != nil {
+	id := c.Param("questionId")
+	intId, err := strconv.Atoi(id)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	response, err := handler.Service.Insert(c.Request.Context(), newAnswerOption)
+
+
+	if err := c.ShouldBindJSON(&newAnswerOption); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	
+	response, err := handler.Service.Insert(c.Request.Context(), newAnswerOption, intId)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -45,7 +54,15 @@ func (handler *AnswerOptionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	response, err := handler.Service.Update(c.Request.Context(), updateAnswerOption)
+	id := c.Param("questionId")
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+
+	response, err := handler.Service.Update(c.Request.Context(), updateAnswerOption, intId)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

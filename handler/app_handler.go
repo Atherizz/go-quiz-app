@@ -6,6 +6,6 @@ type AppHandler struct {
 	Quiz *QuizHandler
 	Question *QuestionHandler
 	AnswerOption *AnswerOptionHandler
-	UserAnswer *UserQuizResultHandler
+	UserAnswer *UserAnswerHandler
 	UserQuizResult *UserQuizResultHandler
 }

@@ -21,14 +21,14 @@ func NewAnswerOptionService(repo repository.AnswerOptionRepository, db *gorm.DB)
 	}
 }
 
-func (service *AnswerOptionService) Insert(ctx context.Context, request web.AnswerOptionRequest) (web.AnswerOptionResponse, error) {
+func (service *AnswerOptionService) Insert(ctx context.Context, request web.AnswerOptionRequest, questionId int) (web.AnswerOptionResponse, error) {
 
 	var response web.AnswerOptionResponse
 
 	err := service.DB.Transaction(func(tx *gorm.DB) error {
 
 		answerOption := model.AnswerOption{
-			QuestionId: request.QuestionId,
+			QuestionId: questionId,
 			OptionText: request.OptionText,
 			IsCorrect: request.IsCorrect,
 		}
@@ -48,7 +48,7 @@ func (service *AnswerOptionService) Insert(ctx context.Context, request web.Answ
 
 }
 
-func (service *AnswerOptionService) Update(ctx context.Context, request web.AnswerOptionRequest) (web.AnswerOptionResponse, error) {
+func (service *AnswerOptionService) Update(ctx context.Context, request web.AnswerOptionRequest, questionId int) (web.AnswerOptionResponse, error) {
 
 	var response web.AnswerOptionResponse
 
@@ -56,7 +56,7 @@ func (service *AnswerOptionService) Update(ctx context.Context, request web.Answ
 
 		AnswerOption := model.AnswerOption{
 			Model: gorm.Model{ID: uint(request.ID)},
-			QuestionId: request.QuestionId,
+			QuestionId: questionId,
 			OptionText: request.OptionText,
 			IsCorrect: request.IsCorrect,
 			OptionNumber: request.OptionNumber,
