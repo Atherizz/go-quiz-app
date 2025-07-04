@@ -92,7 +92,7 @@ func (handler *AnswerOptionHandler) GetAnswerOptionGroupByQuestion(c *gin.Contex
 
 func (handler *AnswerOptionHandler) Delete(c *gin.Context) {
 
-	id := c.Param("id")
+	id := c.Param("answerOptionId")
 	intId, err := strconv.Atoi(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -111,7 +111,7 @@ func (handler *AnswerOptionHandler) Delete(c *gin.Context) {
 
 func (handler *AnswerOptionHandler) GetAnswerOptionById(c *gin.Context) {
 
-	id := c.Param("id")
+	id := c.Param("answerOptionId")
 	intId, err := strconv.Atoi(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

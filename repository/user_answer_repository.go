@@ -17,14 +17,18 @@ func NewUserAnswerRepository() *UserAnswerRepository {
 	return &UserAnswerRepository{}
 }
 
-
 func (repo *UserAnswerRepository) SaveAllAnswers(ctx context.Context, db *gorm.DB, userAnswer web.SubmitQuizRequest) (model.UserQuizResult, error) {
 
 	var bulkInsertData []map[string]interface{}
-	var correctAnswer model.AnswerOption
 
 	for _, a := range userAnswer.Answers {
-		db.Where(&model.AnswerOption{QuestionId: a.QuestionId, IsCorrect: true}).First(&correctAnswer)
+		var correctAnswer model.AnswerOption
+		query := db.Where(&model.AnswerOption{QuestionId: a.QuestionId, IsCorrect: true}).First(&correctAnswer)
+
+		if query.Error != nil {
+			log.Printf("❌ Gagal ambil correct answer untuk QuestionID %d: %v", a.QuestionId, query.Error)
+			return model.UserQuizResult{}, query.Error
+		}
 
 		isCorrect := correctAnswer.OptionNumber == a.SelectedOption
 
@@ -68,19 +72,19 @@ func (repo *UserAnswerRepository) SaveAllAnswers(ctx context.Context, db *gorm.D
 	}
 
 	if totalQuestions > 0 {
-	rawScore := (float64(correctAnswers) / float64(totalQuestions)) * 100
-	score = math.Round(rawScore*100) / 100 
+		rawScore := (float64(correctAnswers) / float64(totalQuestions)) * 100
+		score = math.Round(rawScore*100) / 100
 	}
 
 	newQuizResult := model.UserQuizResult{
-		UserId: userAnswer.UserId,
-		QuizId: userAnswer.QuizId,
-		Score: score,
+		UserId:         userAnswer.UserId,
+		QuizId:         userAnswer.QuizId,
+		Score:          score,
 		TotalQuestions: int(totalQuestions),
 		CorrectAnswers: int(correctAnswers),
 	}
 
-		insertResult := db.Create(&newQuizResult)
+	insertResult := db.Create(&newQuizResult)
 
 	if insertResult.Error != nil {
 		log.Printf("Error creating UserQuizResult: %v", insertResult.Error)
@@ -90,6 +94,14 @@ func (repo *UserAnswerRepository) SaveAllAnswers(ctx context.Context, db *gorm.D
 	if insertResult.RowsAffected == 0 {
 		return model.UserQuizResult{}, insertResult.Error
 	}
+
+	err := db.Preload("User").Preload("Quiz").
+	First(&newQuizResult, newQuizResult.ID).Error
+
+if err != nil {
+	log.Printf("❌ Gagal preload User/Quiz: %v", err)
+	return model.UserQuizResult{}, err
+}
 
 	return newQuizResult, nil
 }

@@ -21,14 +21,14 @@ func NewQuestionService(repo repository.QuestionRepository, db *gorm.DB) *Questi
 	}
 }
 
-func (service *QuestionService) Insert(ctx context.Context, request web.QuestionRequest) (web.QuestionResponse, error) {
+func (service *QuestionService) Insert(ctx context.Context, request web.QuestionRequest, quizId int) (web.QuestionResponse, error) {
 
 	var response web.QuestionResponse
 
 	err := service.DB.Transaction(func(tx *gorm.DB) error {
 
 		question := model.Question{
-			QuizId: request.QuizId,
+			QuizId: quizId,
 			QuestionText: request.QuestionText,
 		}
 
@@ -47,7 +47,7 @@ func (service *QuestionService) Insert(ctx context.Context, request web.Question
 
 }
 
-func (service *QuestionService) Update(ctx context.Context, request web.QuestionRequest) (web.QuestionResponse, error) {
+func (service *QuestionService) Update(ctx context.Context, request web.QuestionRequest, quizId int) (web.QuestionResponse, error) {
 
 	var response web.QuestionResponse
 
@@ -55,7 +55,7 @@ func (service *QuestionService) Update(ctx context.Context, request web.Question
 
 		Question := model.Question{
 			Model: gorm.Model{ID: uint(request.ID)},
-			QuizId: request.QuizId,
+			QuizId: quizId,
 			QuestionText: request.QuestionText,
 		}
 

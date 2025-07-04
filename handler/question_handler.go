@@ -22,12 +22,19 @@ func NewQuestionHandler(service *service.QuestionService) *QuestionHandler {
 func (handler *QuestionHandler) Insert(c *gin.Context) {
 	newQuestion := web.QuestionRequest{}
 
+	id := c.Param("quizId")
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	if err := c.ShouldBindJSON(&newQuestion); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	response, err := handler.Service.Insert(c.Request.Context(), newQuestion)
+	response, err := handler.Service.Insert(c.Request.Context(), newQuestion, intId)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -39,13 +46,18 @@ func (handler *QuestionHandler) Insert(c *gin.Context) {
 
 func (handler *QuestionHandler) Update(c *gin.Context) {
 	updateQuestion := web.QuestionRequest{}
-
+	id := c.Param("quizId")
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	if err := c.ShouldBindJSON(&updateQuestion); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	response, err := handler.Service.Update(c.Request.Context(), updateQuestion)
+	response, err := handler.Service.Update(c.Request.Context(), updateQuestion, intId)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -76,7 +88,7 @@ func (handler *QuestionHandler) GetQuestionGroupByQuiz(c *gin.Context) {
 
 func (handler *QuestionHandler) Delete(c *gin.Context) {
 
-	id := c.Param("id")
+	id := c.Param("questionId")
 	intId, err := strconv.Atoi(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -95,7 +107,7 @@ func (handler *QuestionHandler) Delete(c *gin.Context) {
 
 func (handler *QuestionHandler) GetQuestionById(c *gin.Context) {
 
-	id := c.Param("id")
+	id := c.Param("questionId")
 	intId, err := strconv.Atoi(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

@@ -95,7 +95,7 @@ func (handler *QuizHandler) GetAll(c *gin.Context) {
 
 func (handler *QuizHandler) Delete(c *gin.Context) {
 
-	id := c.Param("id")
+	id := c.Param("quizId")
 	intId, err := strconv.Atoi(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -114,7 +114,7 @@ func (handler *QuizHandler) Delete(c *gin.Context) {
 
 func (handler *QuizHandler) GetQuizById(c *gin.Context) {
 
-	id := c.Param("id")
+	id := c.Param("quizId")
 	intId, err := strconv.Atoi(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
