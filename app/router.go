@@ -52,7 +52,7 @@ func NewRouter(appHandler handler.AppHandler) *gin.Engine {
 			protected.DELETE("/user_answers/:userAnswerId", appHandler.UserAnswer.Delete)
 
 			// leaderbord
-			protected.GET("/quizzes/:quizId/user_quiz_result", appHandler.UserQuizResult.GetUserQuizResultGroupByQuiz)
+			protected.GET("/quizzes/:quizId/leaderboard", appHandler.UserQuizResult.Leaderboard)
 			protected.GET("/quizzes/:quizId/my_quiz_result", appHandler.UserQuizResult.GetQuizResultGroupByQuizAndUser)
 			protected.GET("/my_quiz_result", appHandler.UserQuizResult.GetUserQuizResultGroupByUser)
 
@@ -62,12 +62,12 @@ func NewRouter(appHandler handler.AppHandler) *gin.Engine {
 	oauthGroup := router.Group("/")
 	oauthGroup.Use(middleware.OauthMiddleware())
 
-	oauthGroup.GET("/home", handler.HomeView)
 	oauthGroup.GET("/logout", appHandler.Auth.Logout)
-
+	
 	securedGroup := oauthGroup.Group("/")
 	securedGroup.Use(middleware.AuthMiddleware())
-
+	
+	securedGroup.GET("/home", handler.HomeView)
 	securedGroup.GET("/profile", handler.ProfileView)
 
 	return router

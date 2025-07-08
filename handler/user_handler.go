@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"google-oauth/model"
+	"google-oauth/helper"
 	"google-oauth/web"
 	"net/http"
 
@@ -15,13 +15,14 @@ func GetUserProfile(c *gin.Context) {
 		c.JSON(404, gin.H{"error": "value not found"})
 		return
 	}
-	authUser := user.(model.User)
+	authUser := user.(helper.UserSession)
 
 	userResponse := web.UserResponse{
 		Email:   authUser.Email,
 		Name:    authUser.Name,
 		Picture: authUser.Picture,
 	}
+	
 
 	c.JSON(http.StatusOK, userResponse)
 }

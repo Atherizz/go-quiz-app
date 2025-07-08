@@ -2,8 +2,8 @@ package handler
 
 import (
 	"google-oauth/helper"
-	"google-oauth/model"
 	"html/template"
+
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,28 +21,29 @@ func RegisterView(c *gin.Context) {
 
 func HomeView(c *gin.Context) {
 
-	session, _ := helper.Store.Get(c.Request, "user_info")
+	user, exists := c.Get("user")
+	authUser := user.(helper.UserSession)
 
-	user, ok := session.Values["user"].(model.User)
-	if !ok || user.Email == "" || user.Name == "" {
+	if !exists || authUser.Email == "" || authUser.Name == "" {
 		http.Error(c.Writer, "unauthorized", http.StatusUnauthorized)
 		return
 	}
-	// fmt.Fprint(writer, "welcome ", name)
+
 	tmpl := template.Must(template.ParseFiles("./resources/auth/welcome.gohtml"))
-	tmpl.ExecuteTemplate(c.Writer, "welcome.gohtml", user.Name)
+	tmpl.ExecuteTemplate(c.Writer, "welcome.gohtml", authUser.Name)
+	
 
 }
 
 func ProfileView(c *gin.Context) {
-	session, _ := helper.Store.Get(c.Request, "user_info")
-
-	user, ok := session.Values["user"].(model.User)
-	if !ok || user.Email == "" || user.Name == "" {
+	user, exists := c.Get("user")
+	authUser := user.(helper.UserSession)
+	
+	if !exists || authUser.Email == "" || authUser.Name == "" {
 		http.Error(c.Writer, "unauthorized", http.StatusUnauthorized)
 		return
 	}
-	// fmt.Fprint(writer, "welcome ", name)
+
 	http.ServeFile(c.Writer, c.Request, "./resources/auth/profile.html")
 
 }

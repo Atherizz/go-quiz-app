@@ -1,12 +1,17 @@
 package handler
 
 import (
+	"encoding/json"
+	"google-oauth/helper"
 	"google-oauth/service"
 	"google-oauth/web"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 type QuestionHandler struct {
@@ -75,15 +80,36 @@ func (handler *QuestionHandler) GetQuestionGroupByQuiz(c *gin.Context) {
 		return
 	}
 
+	var responses []web.QuestionResponse
 
-	response, err := handler.Service.GetQuestionGroupByQuiz(c.Request.Context(), intId)
+	
+	client := helper.Client
 
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	result, err := client.Get(c.Request.Context(), "quiz:"+id).Result()
+
+	if err == redis.Nil {
+
+		responses, err = handler.Service.GetQuestionGroupByQuiz(c.Request.Context(), intId)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		jsonResponse, _ := json.Marshal(responses)
+		client.SetEx(c.Request.Context(), "quiz:"+id, jsonResponse, 2 * time.Hour)
+
+	} else if err != nil {  
+    log.Println("❌ Redis error:", err)
+    c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+    return
+	} else {
+		err = json.Unmarshal([]byte(result), &responses)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, responses)
 }
 
 func (handler *QuestionHandler) Delete(c *gin.Context) {

@@ -5,3 +5,10 @@ import (
 )
 
 var Store = sessions.NewCookieStore([]byte(LoadEnv("SESSION_SECRET")))
+
+type UserSession struct {
+	Name string
+	Email string
+	Picture string
+	Sub string
+}

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"google-oauth/helper"
 	"google-oauth/service"
 	"net/http"
 	"strconv"
@@ -12,27 +13,51 @@ type UserQuizResultHandler struct {
 	Service *service.UserQuizResultService
 }
 
+type UserScore struct {
+	User string `json:"user"`
+	Score float64 `json:"score"`
+}
+
+type LeaderboardResponse struct {
+	UserScore []UserScore `json:"user_score"`
+
+}
 func NewUserQuizResultHandler(service *service.UserQuizResultService) *UserQuizResultHandler {
 	return &UserQuizResultHandler{
 		Service: service,
 	}
 }
 
-
-func (handler *UserQuizResultHandler) GetUserQuizResultGroupByQuiz(c *gin.Context) {
+func (handler *UserQuizResultHandler) Leaderboard(c *gin.Context) {
 	id := c.Param("quizId")
-	intId, err := strconv.Atoi(id)
+
+	var userScores []UserScore
+	// intId, err := strconv.Atoi(id)
+	// if err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// 	return
+	// }
+
+	client := helper.Client
+	slice, err := client.ZRangeWithScores(c.Request.Context(), "scores:"+id, 0, -1).Result()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	response, err := handler.Service.GetUserQuizResultGroupByQuiz(c.Request.Context(), intId)
+	for _, z := range slice {
+		userScore := UserScore{
+			User: z.Member.(string),
+			Score: z.Score,
+		}
+		userScores = append(userScores, userScore)
+}
 
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	response := LeaderboardResponse{
+		UserScore: userScores,
 	}
+
+	// response, err := handler.Service.GetUserQuizResultGroupByQuiz(c.Request.Context(), intId)
 
 	c.JSON(http.StatusOK, response)
 }
@@ -52,7 +77,7 @@ func (handler *UserQuizResultHandler) GetQuizResultGroupByQuizAndUser(c *gin.Con
 		return
 	}
 
-	response, err := handler.Service.GetQuizResultGroupByQuizAndUser(c.Request.Context(), quizIdInt,userIdInt)
+	response, err := handler.Service.GetQuizResultGroupByQuizAndUser(c.Request.Context(), quizIdInt, userIdInt)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -98,4 +123,3 @@ func (handler *UserQuizResultHandler) Delete(c *gin.Context) {
 
 	c.JSON(http.StatusOK, "Success delete data")
 }
-

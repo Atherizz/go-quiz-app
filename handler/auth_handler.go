@@ -10,8 +10,11 @@ import (
 	"google-oauth/service"
 	"google-oauth/web"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+
 	"golang.org/x/oauth2"
 )
 
@@ -64,7 +67,9 @@ func (handler *AuthHandler) Callback(c *gin.Context) {
 		http.Error(c.Writer, "no id_token in field token", http.StatusInternalServerError)
 	}
 
-	tokenPayload, err := helper.DecodeIdToken(idToken)
+	// tokenPayload, err := helper.DecodeIdToken(idToken)
+
+	tokenPayload, err := helper.VerifyGoogleIdToken(c.Request.Context(), idToken, middleware.OauthConfig.ClientID)
 	if err != nil {
 		http.Error(c.Writer, "failed decode token", http.StatusInternalServerError)
 	}
@@ -86,40 +91,41 @@ func (handler *AuthHandler) Callback(c *gin.Context) {
 
 	fmt.Println("OAuth token:", cookie)
 
-	userResponse := handler.Service.GetUserByEmail(c.Request.Context(), tokenPayload.Email)
+	userResponse := handler.Service.GetUserByEmail(c.Request.Context(), tokenPayload.Claims["email"].(string))
 
 	if userResponse.Email == "" {
 		userRequest := model.User{
-			GoogleId: tokenPayload.Sub,
-			Name:     tokenPayload.Name,
-			Email:    tokenPayload.Email,
-			Picture:  tokenPayload.Picture,
+			GoogleId: tokenPayload.Claims["sub"].(string),
+			Name:     tokenPayload.Claims["name"].(string),
+			Email:    tokenPayload.Claims["email"].(string),
+			Picture:  tokenPayload.Claims["picture"].(string),
 		}
 
 		handler.Service.RegisterFromGoogle(c.Request.Context(), userRequest)
 	}
 
-	session, _ := helper.Store.Get(c.Request, "user_info")
-	session.Values["user"] = model.User{
-		Name:     tokenPayload.Name,
-		Email:    tokenPayload.Email,
-		Picture:  tokenPayload.Picture,
-		GoogleId: tokenPayload.Sub,
+	sessionId := uuid.NewString()
+
+	userData := map[string]interface{}{
+		"name":    tokenPayload.Claims["name"],
+		"email":   tokenPayload.Claims["email"],
+		"picture": tokenPayload.Claims["picture"],
+		"sub":     tokenPayload.Claims["sub"],
 	}
 
-	err = session.Save(c.Request, c.Writer)
-	if err != nil {
-		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	jsonData, _ := json.Marshal(userData)
 
-	c.Redirect(http.StatusFound, "/home")
-	// http.Redirect(c.Writer, c.Request, "/home", http.StatusFound)
+	client := helper.Client
+
+	client.SetEx(c.Request.Context(), "session:"+sessionId, jsonData, 60*time.Minute)
+	c.SetCookie("session_id", sessionId, 3600, "/", "localhost", false, true)
+
+	c.Redirect(http.StatusSeeOther, "/home")
+
 }
 
 func (handler *AuthHandler) Logout(c *gin.Context) {
 
 	c.SetCookie("oauth_token", "", -1, "/", "localhost", false, true)
 	c.Redirect(http.StatusFound, "/login")
-	// http.Redirect(c.Writer, c.Request, "/login", http.StatusFound)
 }
