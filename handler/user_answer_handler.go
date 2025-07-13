@@ -1,8 +1,9 @@
 package handler
 
 import (
+	"encoding/json"
+	"fmt"
 	"google-oauth/helper"
-	"google-oauth/model"
 	"google-oauth/service"
 	"google-oauth/web"
 	"net/http"
@@ -37,32 +38,63 @@ func (handler *UserAnswerHandler) SaveAllAnswers(c *gin.Context) {
 		return
 	}
 
-	user, exists := c.Get("user")
-	if !exists {
-		c.JSON(404, gin.H{"error": "value not found"})
-		return
-	}
-	authUser := user.(model.User)
+	client := helper.Client
 
-	newUserAnswer.UserId = authUser.ID
-	newUserAnswer.QuizId = intId
+	
+	// client.XGroupCreateConsumer(c.Request.Context(), "quiz_answer_stream", "group-1", "consumer-1")
 
-	response, err := handler.Service.SaveAllAnswers(c.Request.Context(), newUserAnswer, intId)
-
+	key2 := fmt.Sprintf("rate:user:%d:quiz:%d", newUserAnswer.UserId, newUserAnswer.QuizId)
+	count, err := client.Incr(c.Request.Context(), key2).Result()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	client := helper.Client
+	if count > 1 {
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": "you already submit this quiz!"})
+		return
+	}
 
-	key := "score:" + strconv.Itoa(response.Quiz.ID)
-	client.ZAdd(c.Request.Context(), key, redis.Z{
-		Member: response.User.Name,
-		Score: response.Score,
-	})
+	// user, exists := c.Get("user")
+	// if !exists {
+	// 	c.JSON(404, gin.H{"error": "value not found"})
+	// 	return
+	// }
+	// authUser := user.(model.User)
 
-	c.JSON(http.StatusOK, response)
+	// newUserAnswer.UserId = 1
+	newUserAnswer.QuizId = intId
+
+	jsonBody, err := json.Marshal(newUserAnswer)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = client.XAdd(c.Request.Context(), &redis.XAddArgs{
+		Stream: "quiz_answer_stream",
+		Values: map[string]interface{}{
+			"payload": string(jsonBody),
+		},
+	}).Err()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add to stream"})
+		return
+	}
+	// response, err := handler.Service.SaveAllAnswers(c.Request.Context(), newUserAnswer, intId)
+
+	// if err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// 	return
+	// }
+
+	// key := "score:" + strconv.Itoa(response.Quiz.ID)
+	// client.ZAdd(c.Request.Context(), key, redis.Z{
+	// 	Member: response.User.Name,
+	// 	Score:  response.Score,
+	// })
+
+	c.JSON(http.StatusOK, gin.H{"message": "Jawaban berhasil dikirim dan sedang diproses!"})
 }
 
 func (handler *UserAnswerHandler) Delete(c *gin.Context) {

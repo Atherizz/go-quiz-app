@@ -32,14 +32,9 @@ func (handler *UserQuizResultHandler) Leaderboard(c *gin.Context) {
 	id := c.Param("quizId")
 
 	var userScores []UserScore
-	// intId, err := strconv.Atoi(id)
-	// if err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	// 	return
-	// }
 
 	client := helper.Client
-	slice, err := client.ZRangeWithScores(c.Request.Context(), "scores:"+id, 0, -1).Result()
+	slice, err := client.ZRangeWithScores(c.Request.Context(), "score:"+id, 0, -1).Result()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -57,18 +52,16 @@ func (handler *UserQuizResultHandler) Leaderboard(c *gin.Context) {
 		UserScore: userScores,
 	}
 
-	// response, err := handler.Service.GetUserQuizResultGroupByQuiz(c.Request.Context(), intId)
-
 	c.JSON(http.StatusOK, response)
 }
 
 func (handler *UserQuizResultHandler) GetQuizResultGroupByQuizAndUser(c *gin.Context) {
-	userId := c.Param("userId")
-	userIdInt, err := strconv.Atoi(userId)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+	// user, exists := c.Get("user")
+	// if !exists {
+	// 	c.JSON(404, gin.H{"error": "value not found"})
+	// 	return
+	// }
+	// authUser := user.(model.User)
 
 	quizId := c.Param("quizId")
 	quizIdInt, err := strconv.Atoi(quizId)
@@ -77,7 +70,7 @@ func (handler *UserQuizResultHandler) GetQuizResultGroupByQuizAndUser(c *gin.Con
 		return
 	}
 
-	response, err := handler.Service.GetQuizResultGroupByQuizAndUser(c.Request.Context(), quizIdInt, userIdInt)
+	response, err := handler.Service.GetQuizResultGroupByQuizAndUser(c.Request.Context(), quizIdInt, 2)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

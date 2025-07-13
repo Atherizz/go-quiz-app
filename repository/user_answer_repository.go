@@ -24,7 +24,7 @@ func (repo *UserAnswerRepository) SaveAllAnswers(ctx context.Context, db *gorm.D
 	for _, a := range userAnswer.Answers {
 		var correctAnswer model.AnswerOption
 		query := db.Where(&model.AnswerOption{QuestionId: a.QuestionId, IsCorrect: true}).First(&correctAnswer)
-
+		
 		if query.Error != nil {
 			log.Printf("❌ Gagal ambil correct answer untuk QuestionID %d: %v", a.QuestionId, query.Error)
 			return model.UserQuizResult{}, query.Error

@@ -25,7 +25,19 @@ func (repo *UserQuizResultRepository) GetQuizResultGroupByQuizAndUser(ctx contex
 		return model.UserQuizResult{}, result.Error
 	}
 
-	return userQuizResult, nil
+	var userResult model.UserQuizResult
+
+	err := db.
+	Preload("User").
+	Preload("Quiz").
+	First(&userResult, userQuizResult.ID).Error
+
+	if err != nil {
+		fmt.Println("Error saat ambil data UserResult:", result.Error)
+		return model.UserQuizResult{}, result.Error
+	}
+
+	return userResult, nil
 }
 
 func (repo *UserQuizResultRepository) GetUserQuizResultGroupByQuiz(ctx context.Context, db *gorm.DB, quizId int) ([]model.UserQuizResult, error) {
